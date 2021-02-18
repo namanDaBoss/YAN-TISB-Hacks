@@ -1,6 +1,7 @@
-from operator import index
 from flask import Flask, redirect, render_template, request, session, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 app = Flask(__name__)
 app.secret_key = 'somesecretkeythatonlyishouldknow'
@@ -8,6 +9,7 @@ app.secret_key = 'somesecretkeythatonlyishouldknow'
 
 app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 db = SQLAlchemy(app)
 
 
@@ -20,6 +22,20 @@ class User(db.Model):
         return f'<User: {self.username}>'
 
 
+class Sport(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    number_of_courts = db.Column(db.Integer)
+    sport_name = db.Column(db.String(30), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<Sport: {self.sport_name}>'
+
+
+admin = Admin(app, name='Sports Booking', template_mode='bootstrap3')
+admin.add_view(ModelView(User, db.session))
+admin.add_view(ModelView(Sport, db.session))
+
+
 @app.route('/')
 @app.route('/home')
 def home():
@@ -27,12 +43,6 @@ def home():
         return render_template('index.html')
     return redirect(url_for('login'))
 
-
-@app.route('/admin')
-def admin():
-    if "Admin_logged_in" in session:
-        return "<h1>ADMIN</h1>"
-    return redirect(url_for('home'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -60,6 +70,7 @@ def logout():
     if 'user_id' in session:
         session.clear()
     return redirect(url_for('login'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
