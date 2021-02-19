@@ -4,9 +4,15 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 import datetime
 
-
 app = Flask(__name__)
 app.secret_key = 'somesecretkeythatonlyishouldknow'
+
+
+def appropiate_datetime_format(date, time):
+    date = date.split("-")
+    time = time.split(":")[0]
+    appropiate_datetime_format = date[2] + "-" + date[1] + "-" + date[0] + "-" + time
+    return appropiate_datetime_format
 
 
 app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
@@ -101,12 +107,22 @@ def week_later():
     week_later = today + datetime.timedelta(days=7)
     return week_later
 
+
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():
+    if request.method == 'POST' and not is_admin():
+        email = request.form["email"]
+        date = request.form["date"]
+        time = request.form["time"]
+        sport_from_form = request.form["sport"]
+        datetime_to_func = appropiate_datetime_format(date, time)
+        if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
+            return datetime_to_func + " " + sport_from_form
     if is_admin():
         return redirect('/admin')
     if logged_in():
         return render_template('booking.html', min_date = today(), max_date = week_later())
-    return redirect(url_for('home'))
+
+
 if __name__ == '__main__':
     app.run(debug=True)
