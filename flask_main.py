@@ -65,11 +65,6 @@ def str2datetime(string):
 
 
 
-
-
-
-
-
 @app.route("/")
 @app.route("/home")
 def home():
@@ -126,6 +121,13 @@ def week_later():
     week_later = today + datetime.timedelta(days=7)
     return week_later
 
+@app.route("/empty-slots")
+def empty_slots232324():
+    return redirect(url_for("home"))
+
+@app.route("/empty-slots/<string:sport>")
+def empty_slots(sport=""):
+    
 
 @app.route("/book-slots", methods=["GET", "POST"])
 def book_slot():
@@ -139,27 +141,50 @@ def book_slot():
 
         if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
             number_of_courts_available = 2
-            booking_thing = {
-                "username": "Samrath",
-                "bookdatetime": "21-02-2021-10",
-                "sport": "Tennis"
+            booking = {
+                "username": session["username"],
+                "bookdatetime": datetime_to_func,
+                "sport": sport_from_form
             }
             with sqlite3.connect("site.db") as conn:
-                cur = conn.cursor()
+                number_of_courts_available = (
+                    Sport.query.filter_by(
+                        sport_name=booking.get("sport")).first().number_of_courts
+                )
+                if len(booking.get("bookdatetime")) > 10:
+                    timeOfBook = booking.get("bookdatetime")
+                    cursor = conn.execute(
+                        "select name from tisb where name =? and datetime like ? and sport=?;",
+                        (booking.get("username"),
+                        timeOfBook[:10] + "%", booking.get("sport")),
+                    )
+                else:
+                    cursor = conn.execute(
+                        "select name from tisb where name =? and datetime =? and sport=?;",
+                        (booking.get("username"), booking.get(
+                            "bookdatetime"), booking.get("sport")),
+                    )
+
+                booksInDay = cursor.fetchall()
+                if len(booksInDay) >= 2:
+                    return "<h1>You have reached your booking limitation in this sport for today</h1>"
                 cursor = conn.execute(
                     "select name from tisb where datetime = ? and sport=?;",
-                    (booking_thing.get("bookdatetime"), booking_thing.get("sport")),
+                    (booking.get("bookdatetime"), booking.get("sport")),
                 )
                 row = cursor.fetchall()
                 if len(row) < number_of_courts_available:
                     cursor = conn.execute(
                         "insert into tisb(name,datetime,sport)values \
                         (?,?,?)",
-                        (booking_thing.get("username"), booking_thing.get(
-                            "bookdatetime"), booking_thing.get("sport")),
+                        (booking.get("username"), booking.get(
+                            "bookdatetime"), booking.get("sport")),
                     )
                     conn.commit()
-            return datetime_to_func + " " + sport_from_form
+                    return "<h1>True</h1>"
+                else:
+                    return "<h1>No empty slots, these below are the available slots</h1>"
+#ANYASH
 
     if is_admin():
         return redirect("/admin")
