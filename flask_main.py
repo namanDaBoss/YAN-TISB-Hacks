@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 import datetime
+import sqlite3
+from datetime import datetime, date, timedelta
 
 app = Flask(__name__)
 app.secret_key = 'somesecretkeythatonlyishouldknow'
@@ -11,7 +13,8 @@ app.secret_key = 'somesecretkeythatonlyishouldknow'
 def appropiate_datetime_format(date, time):
     date = date.split("-")
     time = time.split(":")[0]
-    appropiate_datetime_format = date[2] + "-" + date[1] + "-" + date[0] + "-" + time
+    appropiate_datetime_format = date[2] + \
+        "-" + date[1] + "-" + date[0] + "-" + time
     return appropiate_datetime_format
 
 
@@ -55,6 +58,86 @@ admin = Admin(app, name='Sports Booking', template_mode='bootstrap4')
 admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Sport, db.session))
 
+conn = sqlite3.connect("tisb.db")
+cursor = conn.cursor()
+
+
+def get_number_of_courts(sport_name):
+    Sport
+
+
+def book(x, booking):
+    cursor = conn.execute("select name from tisb where datetime = ? and sport=?;",
+                          (booking.bookdatetime, booking.sport))
+    row = cursor.fetchall()
+    if len(row) < x:
+        cursor = conn.execute("insert into tisb(name,email,datetime,sport)values \
+            (?,?,?,?)", (booking.username, booking.email, booking.bookdatetime, booking.sport))
+        conn.commit()
+        return True
+    else:
+        return False
+
+
+def showRemainingCourts(x, booking):
+    cursor = conn.execute(
+        "select name from tisb where datetime = ?;", (booking.bookdatetime))
+    row = cursor.fetchall()
+    remaining = x-len(row)
+    return remaining
+
+
+def check(booking):
+    if len(booking.bookdatetime) > 10:
+        cursor = conn.execute("select email from tisb where name =? and datetime like ? and sport=?;",
+                              (booking.username, booking.bookdatetime[:10]+"%", booking.sport))
+    else:
+        cursor = conn.execute("select email from tisb where name =? and datetime =? and sport=?;",
+                              (booking.username, booking.bookdatetime, booking.sport))
+
+    row = cursor.fetchall()
+    if len(row) >= 2:
+        return False
+    else:
+        return True
+
+
+def str2datetime(string):
+    datet = datetime.strptime(string, "%d-%m-%Y-%h")
+    return datet
+
+
+def seeall(booking):
+    cursor = conn.execute(
+        "select name,email,datetime from tisb where sport = ?;", (booking.sport))
+
+    row = cursor.fetchall()
+
+    newli = []
+    for i in row:
+        a = list(i)
+        a[2] = str2datetime(a[2])
+        newli.append(a)
+
+    return newli
+
+
+def avail(booking, x):
+    cursor = conn.execute(
+        "select datetime from tisb where sport =?;", (booking.sport))
+    row = cursor.fetchall()
+    times = []
+    for i in row:
+        if i[0][:10] == booking.bookdatetime[:10]:
+            times.append(i[0][11:])
+    li = ['07', '08', '09', '10', '11', '12', '13',
+          '14', '15', '16', '17', '18', '19', '20']
+    availSlots = []
+    for i in li:
+        if times.count(i) < x:
+            availSlots.append(i)
+    return availSlots
+
 
 @app.route('/')
 @app.route('/home')
@@ -65,7 +148,6 @@ def home():
         else:
            return render_template('index.html', button_content="Booking", button_url=url_for('booking'))
     return render_template('index.html', button_content="Login", button_url=url_for('login'))
-
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -90,6 +172,7 @@ def logout():
     if logged_in():
         session.clear()
     return redirect(url_for('login'))
+
 
 def logged_in():
     if 'username' in session:
@@ -121,7 +204,7 @@ def booking():
     if is_admin():
         return redirect('/admin')
     if logged_in():
-        return render_template('booking.html', min_date = today(), max_date = week_later())
+        return render_template('booking.html', min_date=today(), max_date=week_later())
 
 
 if __name__ == '__main__':
