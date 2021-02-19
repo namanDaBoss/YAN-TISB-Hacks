@@ -127,7 +127,31 @@ def empty_slots232324():
 
 @app.route("/empty-slots/<string:sport>")
 def empty_slots(sport=""):
-    
+    if "booking" in session:
+        with sqlite3.connect("site.db") as conn:
+            booking = session["booking"]
+            number_of_courts_available = 1
+            cursor = conn.execute(
+                "select datetime from tisb where sport =?;", (booking.get("sport"),))
+            row = cursor.fetchall()
+            times = []
+            for i in row:
+                bookingTime = booking.get("bookdatetime")
+                if i[0][:10] == bookingTime[:10]:
+                    times.append(i[0][11:])
+            li = ["07", "08", "09", "10", "11", "12", "13",
+                "14", "15", "16", "17", "18", "19", "20", ]
+            availSlots = []
+            for i in li:
+                if times.count(i) < number_of_courts_available:
+                    availSlots.append(i)
+            for i in range(len(availSlots)):
+                if int(availSlots[i]) > 12:
+                    availSlots[i] = availSlots[i] + " " + "AM"
+                else:
+                    availSlots[i] = availSlots[i] + " " + "PM"
+            return render_template("available_slots.html", availSlots=availSlots)
+    return redirect(url_for("login"))
 
 @app.route("/book-slots", methods=["GET", "POST"])
 def book_slot():
@@ -146,6 +170,7 @@ def book_slot():
                 "bookdatetime": datetime_to_func,
                 "sport": sport_from_form
             }
+            session["booking"] = booking
             with sqlite3.connect("site.db") as conn:
                 number_of_courts_available = (
                     Sport.query.filter_by(
@@ -183,7 +208,8 @@ def book_slot():
                     conn.commit()
                     return "<h1>True</h1>"
                 else:
-                    return "<h1>No empty slots, these below are the available slots</h1>"
+                    a = "/empty-slots" + "/" + booking["sport"]
+                    return redirect(a)
 #ANYASH
 
     if is_admin():
