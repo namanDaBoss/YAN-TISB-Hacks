@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime,date,timedelta
 
 conn = sqlite3.connect("tisb.db")
 cursor = conn.cursor()
@@ -74,4 +74,13 @@ def seeall(booking):
 
 
     return newli
+
+def today():
+    today=date.today()
+    return today
+def week():
+    today=date.today()
+    week_ago = today + timedelta(days=7)
+    return week_ago
+
 
