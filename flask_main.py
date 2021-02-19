@@ -14,13 +14,6 @@ app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
 db = SQLAlchemy(app)
 
 
-def make_booking_item(username, bookdatetime, sport):
-    BookingItem = {
-        "username": username,
-        "bookdatetime": bookdatetime,
-        "sport": sport
-    }
-    return BookingItem
 
 
 def appropiate_datetime_format(date, time):
@@ -66,15 +59,7 @@ admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Sport, db.session))
 
 
-conn = sqlite3.connect("site.db")
-cursor = conn.cursor()
-
-
-def book(booking):
-    number_of_courts_available = (
-        Sport.query.filter_by(sport_name=booking.get(
-            "sport")).first().number_of_courts
-    )
+def book(number_of_courts_available, booking):
     cursor = conn.execute(
         "select name from tisb where datetime = ? and sport=?;",
         (booking.get("bookdatetime"), booking.get("sport")),
@@ -83,7 +68,7 @@ def book(booking):
     if len(row) < number_of_courts_available:
         cursor = conn.execute(
             "insert into tisb(name,datetime,sport)values \
-            (?,?,?,?)",
+            (?,?,?)",
             (booking.get("username"), booking.get(
                 "bookdatetime"), booking.get("sport")),
         )
@@ -241,8 +226,12 @@ def book_slot():
         datetime_to_func = appropiate_datetime_format(date, time)
 
         if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
-            make_booking_item(
-                username=session["username"], bookdatetime=datetime_to_func, sport=sport_from_form)
+            book_thing = {
+                "username": "Samrath",
+                "bookdatetime": "21-02-2021-09",
+                "sport": "Tennis"
+            }
+            book(4,book_thing)
             return datetime_to_func + " " + sport_from_form
 
     if is_admin():
