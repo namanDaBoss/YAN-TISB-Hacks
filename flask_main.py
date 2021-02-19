@@ -281,7 +281,7 @@ def book_slot():
                 bookdatetime=datetime_to_func,
                 sport=sport_from_form,
             )
-            
+            book(Booking)
             return datetime_to_func + " " + sport_from_form
         
     if is_admin():
