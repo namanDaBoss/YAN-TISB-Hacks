@@ -6,7 +6,6 @@ import datetime
 import sqlite3
 
 
-
 app = Flask(__name__)
 app.secret_key = "somesecretkeythatonlyishouldknow"
 app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
@@ -15,15 +14,13 @@ app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
 db = SQLAlchemy(app)
 
 
-
 def make_booking_item(username, bookdatetime, sport):
-    BookingItem= {
-        "username" : username,
-        "bookdatetime" : bookdatetime,
-        "sport" : sport
+    BookingItem = {
+        "username": username,
+        "bookdatetime": bookdatetime,
+        "sport": sport
     }
     return BookingItem
-
 
 
 def appropiate_datetime_format(date, time):
@@ -32,7 +29,6 @@ def appropiate_datetime_format(date, time):
     appropiate_datetime_format = date[2] + \
         "-" + date[1] + "-" + date[0] + "-" + time
     return appropiate_datetime_format
-
 
 
 class User(db.Model):
@@ -44,8 +40,6 @@ class User(db.Model):
         return f"<User: {self.username}>"
 
 
-
-
 class Sport(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     number_of_courts = db.Column(db.Integer)
@@ -55,8 +49,6 @@ class Sport(db.Model):
         return f"<Sport: {self.sport_name}>"
 
 
-
-
 def is_admin():
     if "username" in session:
         if session["username"] == "000":
@@ -64,11 +56,9 @@ def is_admin():
     return False
 
 
-
 class MyModelView(ModelView):
     def is_accessible(self):
         return is_admin()
-
 
 
 admin = Admin(app, name="Sports Booking", template_mode="bootstrap4")
@@ -80,10 +70,10 @@ conn = sqlite3.connect("site.db")
 cursor = conn.cursor()
 
 
-
 def book(booking):
     number_of_courts_available = (
-        Sport.query.filter_by(sport_name=booking.get("sport")).first().number_of_courts
+        Sport.query.filter_by(sport_name=booking.get(
+            "sport")).first().number_of_courts
     )
     cursor = conn.execute(
         "select name from tisb where datetime = ? and sport=?;",
@@ -94,7 +84,8 @@ def book(booking):
         cursor = conn.execute(
             "insert into tisb(name,datetime,sport)values \
             (?,?,?,?)",
-            (booking.get("username"), booking.get("bookdatetime"), booking.get("sport")),
+            (booking.get("username"), booking.get(
+                "bookdatetime"), booking.get("sport")),
         )
         conn.commit()
         return True
@@ -108,7 +99,8 @@ def showRemainingCourts(booking):
             sport_name=booking.get("sport")).first().number_of_courts
     )
     cursor = conn.execute(
-        "select name from tisb where datetime = ?;", (booking.get("bookdatetime"))
+        "select name from tisb where datetime = ?;", (booking.get(
+            "bookdatetime"))
     )
     row = cursor.fetchall()
     remaining = number_of_courts_available - len(row)
@@ -117,15 +109,17 @@ def showRemainingCourts(booking):
 
 def check(booking):
     if len(booking.get("bookdatetime")) > 10:
-    	timeOfBook = booking.get("bookdatetime")
+        timeOfBook = booking.get("bookdatetime")
         cursor = conn.execute(
             "select username from tisb where name =? and datetime like ? and sport=?;",
-            (booking.get("username"), timeOfBook[:10] + "%", booking.get("sport")),
+            (booking.get("username"),
+             timeOfBook[:10] + "%", booking.get("sport")),
         )
     else:
         cursor = conn.execute(
             "select username from tisb where name =? and datetime =? and sport=?;",
-            (booking.get("username"), booking.get("bookdatetime"), booking.get("sport")),
+            (booking.get("username"), booking.get(
+                "bookdatetime"), booking.get("sport")),
         )
 
     row = cursor.fetchall()
@@ -135,11 +129,9 @@ def check(booking):
         return True
 
 
-
 def str2datetime(string):
     datet = datetime.strptime(string, "%d-%m-%Y-%h")
     return datet
-
 
 
 def seeall(booking):
@@ -159,7 +151,6 @@ def seeall(booking):
     return newli
 
 
-
 def avail(booking):
     number_of_courts_available = (
         Sport.query.filter_by(
@@ -170,17 +161,16 @@ def avail(booking):
     row = cursor.fetchall()
     times = []
     for i in row:
-    	bookingTime = booking.get("bookdatetime")
+        bookingTime = booking.get("bookdatetime")
         if i[0][:10] == bookingTime[:10]:
             times.append(i[0][11:])
     li = ["07", "08", "09", "10", "11", "12", "13",
-          "14", "15", "16", "17", "18", "19", "20", ]
+        "14", "15", "16", "17", "18", "19", "20", ]
     availSlots = []
     for i in li:
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
     return availSlots
-
 
 
 @app.route("/")
@@ -198,7 +188,6 @@ def home():
     )
 
 
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if not logged_in():
@@ -212,10 +201,9 @@ def login():
                 if password == user_queried.password:
                     session["username"] = user_queried.username
                     return redirect(url_for("home"))
-                
+
         return render_template("login.html")
     return redirect(url_for("home"))
-
 
 
 @app.route("/logout")
@@ -225,18 +213,15 @@ def logout():
     return redirect(url_for("login"))
 
 
-
 def logged_in():
     if "username" in session:
         return True
     return False
 
 
-
 def today():
     today = datetime.date.today()
     return today
-
 
 
 def week_later():
@@ -245,27 +230,27 @@ def week_later():
     return week_later
 
 
-
 @app.route("/book-slots", methods=["GET", "POST"])
 def book_slot():
     if request.method == "POST" and not is_admin() and logged_in():
-        
+
         date = request.form["date"]
         time = request.form["time"]
         sport_from_form = request.form["sport"]
-        
+
         datetime_to_func = appropiate_datetime_format(date, time)
-        
+
         if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
-            make_booking_item(username = session["username"], bookdatetime = datetime_to_func, sport = sport_from_form)
+            make_booking_item(
+                username=session["username"], bookdatetime=datetime_to_func, sport=sport_from_form)
             return datetime_to_func + " " + sport_from_form
-        
+
     if is_admin():
         return redirect("/admin")
-    
+
     if logged_in():
         return render_template("booking.html", min_date=today(), max_date=week_later())
-    
+
     return redirect(url_for("login"))
 
 
