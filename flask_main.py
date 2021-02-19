@@ -58,7 +58,7 @@ admin = Admin(app, name='Sports Booking', template_mode='bootstrap4')
 admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Sport, db.session))
 
-conn = sqlite3.connect("tisb.db")
+conn = sqlite3.connect("site.db")
 cursor = conn.cursor()
 
 
