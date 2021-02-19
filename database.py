@@ -5,12 +5,6 @@ conn = sqlite3.connect("tisb.db")
 cursor = conn.cursor()
 
 #function for checking whether or not that slot is filled. If not, it inserts it.
-#booking= {
- #   'username':'Naman',
-  #  'email':'email2namanjain@gmail.com',
-   # 'bookdatetime':'16-05-2003-09395',
-    #'sport': 'badminton'
-    #}
 class booking():
     now=datetime.now()
     username='Arjun'
@@ -84,7 +78,7 @@ def week():
     week_ago = today + timedelta(days=7)
     return week_ago
 
-def avail(booking,x):
+def avail(booking, x):
     cursor=conn.execute("select datetime from tisb where sport ='"+booking.sport+"'")
     row=cursor.fetchall()
     times=[]
@@ -97,5 +91,3 @@ def avail(booking,x):
         if times.count(i)<x:
             availSlots.append(i)
     return availSlots
-    
-
