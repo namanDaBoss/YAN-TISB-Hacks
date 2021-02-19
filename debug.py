@@ -6,7 +6,7 @@ cursor = conn.cursor()
 
 booking={
     "bookdatetime":"20-05-2003-07",
-    "username":"naman",
+    "username":"arjun",
     "sport":"badminton"
     }
 
@@ -51,8 +51,8 @@ def showRemainingCourts(booking):
             sport_name=booking.get("sport")).first().number_of_courts
     )
     cursor = conn.execute(
-        "select name from tisb where datetime = ?;", (booking.get(
-            "bookdatetime"))
+        "select name from tisb where datetime = ? and sport=?;", (booking.get(
+            "bookdatetime"),booking.get("sport"))
     )
     row = cursor.fetchall()
     remaining = number_of_courts_available - len(row)
@@ -102,3 +102,10 @@ def delete(bookid):
     cursor=conn.execute("delete from tisb where id =?;",(str(bookid)))
     conn.commit()
     return "deleted"
+
+def userDetails(booking):
+    username=booking.get("username")
+    cursor=conn.execute("select datetime,sport from tisb where name=?;",(username,))
+    userData=cursor.fetchall()
+    return userData
+
