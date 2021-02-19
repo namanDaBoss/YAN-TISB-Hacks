@@ -1,98 +1,102 @@
 import sqlite3
-from datetime import datetime, date, timedelta
+from datetime import datetime,date,timedelta
 
 conn = sqlite3.connect("tisb.db")
 cursor = conn.cursor()
 
+#function for checking whether or not that slot is filled. If not, it inserts it.
+#booking= {
+ #   'username':'Naman',
+  #  'email':'email2namanjain@gmail.com',
+   # 'bookdatetime':'16-05-2003-09395',
+    #'sport': 'badminton'
+    #}
+class booking():
+    now=datetime.now()
+    username='Arjun'
+    email='agtherock13@gmail.com'
+    #bookdatetime=now.strftime("%d-%m-%Y-%h")
+    bookdatetime='16-05-2003-07'
+    sport='badminton'
+    
 
-"""
-class booking:
-    bookdatetime -> time of the booking, string
-    sport -> the sport for the booking, string
-    email -> email of the person who booked the slot, string
-    username -> the username of the person who booked the slot, string
-"""
-def book(number_of_courts, booking):#to book a slot
-    cursor = conn.execute("select name from tisb where datetime = '" +
-                          booking.bookdatetime+"' and sport='"+booking.sport+"'")
+
+def book(x,booking):
+    cursor = conn.execute("select name from tisb where datetime = ? and sport=?;",(booking.bookdatetime,booking.sport))
     row = cursor.fetchall()
-    if len(row) < number_of_courts:#if there are available courts
-        cursor = conn.execute(
-            "insert into tisb(name,email,datetime,sport)values(?,?,?,?)",
-            (booking.username, booking.email, booking.bookdatetime, booking.sport))
-        conn.commit()#adding the users
+    if len(row)<x:
+        cursor=conn.execute("insert into tisb(name,email,datetime,sport)values \
+            (?,?,?,?)", (booking.username,booking.email,booking.bookdatetime,booking.sport))
+        conn.commit()
+        print("y")
         return True
     else:
+        print("n")
         return False
 
 
-def showRemainingCourts(number_of_courts, booking):
-    cursor = conn.execute(
-        "select name from tisb where datetime = '"+booking.bookdatetime+"'")
+
+def showRemainingCourts(x,booking):
+    cursor = conn.execute("select name from tisb where datetime = ?;",(booking.bookdatetime))
     row = cursor.fetchall()
-    remaining = number_of_courts-len(row)
+    remaining=x-len(row)
     return remaining
 
-
 def check(booking):
-    if len(booking.bookdatetime) > 10:
-
-        cursor = conn.execute("select email from tisb where name ='" + booking.username +
-                              "' and datetime like '"+booking.bookdatetime[:10]+"%' and sport='"+booking.sport+"'")
-
+    if len(booking.bookdatetime)>10:
+    
+        cursor=conn.execute("select email from tisb where name =? and datetime like ? and sport=?;"(booking.username,booking.bookdatetime[:10]+"%",booking.sport)
+        
     else:
-
-        cursor = conn.execute("select email from tisb where name ='" + booking.username +
-                              "' and datetime ='"+booking.bookdatetime+"' and sport='"+booking.sport+"'")
-    row = cursor.fetchall()
+        
+        cursor=conn.execute("select email from tisb where name =? and datetime =? and sport=?;"(booking.username,booking.bookdatetime,booking.sport))
+    row=cursor.fetchall()
     if len(row) >= 2:
         return False
     else:
         return True
 
 
-def str2datetime(datetime_in_str):
-    datetime_as_datetime = datetime.strptime(datetime_in_str, "%d-%m-%Y-%h")
-    return datetime_as_datetime
-
+def str2datetime(string):
+    datet = datetime.strptime(string,"%d-%m-%Y-%h")
+    return datet
 
 def seeall(booking):
-    cursor = conn.execute(
-        "select name,email,datetime from tisb where sport = '"+booking.sport+"'")
-    result = cursor.fetchall()
+    cursor=conn.execute("select name,email,datetime from tisb where sport = ?;"(booking.sport))
 
-    result_with_datetime = []
-    for i in result:# This for loop changes the str datetime to a datetime object
-        a = list(i)
-        a[2] = str2datetime(a[2])
-        result_with_datetime.append(a)
+    row=cursor.fetchall()
 
-    return result_with_datetime
+    newli=[]
+    for i in row:
+        a=list(i)
+        sdate=a[2]
+        ddate=str2datetime(sdate)
+        a.remove(sdate)
+        a.insert(2,ddate)
+        newli.append(a)
 
+
+    return newli
 
 def today():
-    today = date.today()
+    today=date.today()
     return today
-
-
 def week():
-    today = date.today()
+    today=date.today()
     week_ago = today + timedelta(days=7)
     return week_ago
 
-
-def avail(booking, x):
-    cursor = conn.execute(
-        "select datetime from tisb where sport ='"+booking.sport+"'")
-    row = cursor.fetchall()
-    times = []
+def avail(booking,x):
+    cursor=conn.execute("select datetime from tisb where sport =?;"(booking.sport))
+    row=cursor.fetchall()
+    times=[]
     for i in row:
-        if i[0][:10] == booking.bookdatetime[:10]:
+        if i[0][:10]==booking.bookdatetime[:10]:
             times.append(i[0][11:])
-    li = ['07', '08', '09', '10', '11', '12', '13',
-          '14', '15', '16', '17', '18', '19', '20']
-    availSlots = []
+    li=['07','08','09','10','11','12','13','14','15','16','17','18','19','20']
+    availSlots=[]
     for i in li:
-        if times.count(i) < x:
+        if times.count(i)<x:
             availSlots.append(i)
     return availSlots
+
