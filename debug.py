@@ -66,7 +66,7 @@ def str2datetime(string):
 def seeall(booking):
     cursor = conn.execute(
         "select name,datetime from tisb where sport = ?;", (
-            booking.get("sport"))
+            booking.get("sport"),)
     )
 
     row = cursor.fetchall()
@@ -80,12 +80,9 @@ def seeall(booking):
     return newli
     
 def avail(booking):
-    number_of_courts_available = (
-        Sport.query.filter_by(
-            sport_name=booking.get("sport")).first().number_of_courts
-    )
+    number_of_courts_available = 1
     cursor = conn.execute(
-        "select datetime from tisb where sport =?;", (booking.get("sport")))
+        "select datetime from tisb where sport =?;", (booking.get("sport"),))
     row = cursor.fetchall()
     times = []
     for i in row:
@@ -99,4 +96,8 @@ def avail(booking):
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
     return availSlots
-book(5,booking)
+
+def delete(bookid):
+    cursor=conn.execute("delete from tisb where id =?;",(str(bookid)))
+    conn.commit()
+    return "deleted"
