@@ -9,16 +9,10 @@ import sqlite3
 
 app = Flask(__name__)
 app.secret_key = "somesecretkeythatonlyishouldknow"
-
-
-
-
-class Booking:
-    def __init__(self, username, bookdatetime, sport):
-        self.username = username
-        self.bookdatetime = bookdatetime
-        self.sport = sport
-
+app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
+app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
+db = SQLAlchemy(app)
 
 
 
@@ -28,15 +22,6 @@ def appropiate_datetime_format(date, time):
     appropiate_datetime_format = date[2] + \
         "-" + date[1] + "-" + date[0] + "-" + time
     return appropiate_datetime_format
-
-
-
-
-app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
-app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
-db = SQLAlchemy(app)
-
 
 
 
@@ -88,8 +73,7 @@ cursor = conn.cursor()
 
 def book(booking):
     number_of_courts_available = (
-        Sport.query.filter_by(
-            sport_name=booking.sport).first().number_of_courts
+        Sport.query.filter_by(sport_name=booking.sport).first().number_of_courts
     )
     cursor = conn.execute(
         "select name from tisb where datetime = ? and sport=?;",
@@ -177,22 +161,8 @@ def avail(booking):
     for i in row:
         if i[0][:10] == booking.bookdatetime[:10]:
             times.append(i[0][11:])
-    li = [
-        "07",
-        "08",
-        "09",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20",
-    ]
+    li = ["07", "08", "09", "10", "11", "12", "13",
+          "14", "15", "16", "17", "18", "19", "20", ]
     availSlots = []
     for i in li:
         if times.count(i) < number_of_courts_available:
