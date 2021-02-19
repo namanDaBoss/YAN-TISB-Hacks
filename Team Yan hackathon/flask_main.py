@@ -30,16 +30,21 @@ class Sport(db.Model):
     def __repr__(self):
         return f'<Sport: {self.sport_name}>'
 
-
+class MyModelView(ModelView):
+    
 admin = Admin(app, name='Sports Booking', template_mode='bootstrap3')
 admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(Sport, db.session))
 
-
+def is_admin():
+    if "username" in session:
+        if session["username"] == "000":
+            return True
+        return False
 @app.route('/')
 @app.route('/home')
 def home():
-    if 'user_id' in session:
+    if 'username' in session:
         return render_template('index.html')
     return redirect(url_for('login'))
 
@@ -47,19 +52,16 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'user_id' not in session:
+    if 'username' not in session:
         if request.method == 'POST':
-            session.pop('user_id', None)
+            session.pop('username', None)
             username = str(request.form['username'])
             password = str(request.form['password'])
-            if username == "Admin" and password == "QswhHJ21334Gk23j23h1G4HJ4KJHv2kj34v4k2233":
-                session["Admin_logged_in"] = True
-                return redirect(url_for('admin'))
             user_queried = User.query.filter_by(username=username).first()
 
             if user_queried is not None:
                 if password == user_queried.password:
-                    session['user_id'] = user_queried.id
+                    session['username'] = user_queried.name
                     return redirect(url_for('home'))
         return render_template('login.html')
     return redirect(url_for('home'))
@@ -67,7 +69,7 @@ def login():
 
 @app.route("/logout")
 def logout():
-    if 'user_id' in session:
+    if 'username' in session:
         session.clear()
     return redirect(url_for('login'))
 
