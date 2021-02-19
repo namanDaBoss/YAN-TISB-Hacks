@@ -14,11 +14,17 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
 app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
 db = SQLAlchemy(app)
 
-sampleBook= {
-    username:'sam',
-    bookdatetime:'16-05-2003-07',
-    sport:'badminton'
+
+
+def make_booking_item(username, bookdatetime, sport):
+    BookingItem= {
+        "username" : username,
+        "bookdatetime" : bookdatetime,
+        "sport" : sport
     }
+    return BookingItem
+
+
 
 def appropiate_datetime_format(date, time):
     date = date.split("-")
@@ -77,18 +83,18 @@ cursor = conn.cursor()
 
 def book(booking):
     number_of_courts_available = (
-        Sport.query.filter_by(sport_name=booking.get(sport)).first().number_of_courts
+        Sport.query.filter_by(sport_name=booking.get("sport")).first().number_of_courts
     )
     cursor = conn.execute(
         "select name from tisb where datetime = ? and sport=?;",
-        (booking.get(bookdatetime), booking.get(sport)),
+        (booking.get("bookdatetime"), booking.get("sport")),
     )
     row = cursor.fetchall()
     if len(row) < number_of_courts_available:
         cursor = conn.execute(
             "insert into tisb(name,datetime,sport)values \
             (?,?,?,?)",
-            (booking.get(username), booking.get(bookdatetime), booking.get(sport)),
+            (booking.get("username"), booking.get("bookdatetime"), booking.get("sport")),
         )
         conn.commit()
         return True
@@ -99,10 +105,10 @@ def book(booking):
 def showRemainingCourts(booking):
     number_of_courts_available = (
         Sport.query.filter_by(
-            sport_name=booking.get(sport)).first().number_of_courts
+            sport_name=booking.get("sport")).first().number_of_courts
     )
     cursor = conn.execute(
-        "select name from tisb where datetime = ?;", (booking.get(bookdatetime))
+        "select name from tisb where datetime = ?;", (booking.get("bookdatetime"))
     )
     row = cursor.fetchall()
     remaining = number_of_courts_available - len(row)
@@ -110,16 +116,16 @@ def showRemainingCourts(booking):
 
 
 def check(booking):
-    if len(booking.get(bookdatetime)) > 10:
-    	timeOfBook = booking.get(bookdatetime)
+    if len(booking.get("bookdatetime")) > 10:
+    	timeOfBook = booking.get("bookdatetime")
         cursor = conn.execute(
             "select username from tisb where name =? and datetime like ? and sport=?;",
-            (booking.get(username), timeOfBook[:10] + "%", booking.get(sport)),
+            (booking.get("username"), timeOfBook[:10] + "%", booking.get("sport")),
         )
     else:
         cursor = conn.execute(
             "select username from tisb where name =? and datetime =? and sport=?;",
-            (booking.get(username), booking.get(bookdatetime), booking.get(sport)),
+            (booking.get("username"), booking.get("bookdatetime"), booking.get("sport")),
         )
 
     row = cursor.fetchall()
@@ -139,7 +145,7 @@ def str2datetime(string):
 def seeall(booking):
     cursor = conn.execute(
         "select name,datetime from tisb where sport = ?;", (
-            booking.get(sport))
+            booking.get("sport"))
     )
 
     row = cursor.fetchall()
@@ -157,14 +163,14 @@ def seeall(booking):
 def avail(booking):
     number_of_courts_available = (
         Sport.query.filter_by(
-            sport_name=booking.get(sport)).first().number_of_courts
+            sport_name=booking.get("sport")).first().number_of_courts
     )
     cursor = conn.execute(
-        "select datetime from tisb where sport =?;", (booking.get(sport)))
+        "select datetime from tisb where sport =?;", (booking.get("sport")))
     row = cursor.fetchall()
     times = []
     for i in row:
-    	bookingTime = booking.get(bookdatetime)
+    	bookingTime = booking.get("bookdatetime")
         if i[0][:10] == bookingTime[:10]:
             times.append(i[0][11:])
     li = ["07", "08", "09", "10", "11", "12", "13",
@@ -251,6 +257,7 @@ def book_slot():
         datetime_to_func = appropiate_datetime_format(date, time)
         
         if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
+            make_booking_item(username = session["username"], bookdatetime = datetime_to_func, sport = sport_from_form)
             return datetime_to_func + " " + sport_from_form
         
     if is_admin():
