@@ -11,12 +11,13 @@ cursor = conn.cursor()
    # 'bookdatetime':'16-05-2003-09395',
     #'sport': 'badminton'
     #}
-#class booking():
- #   now=datetime.now()
-  #  username='Arjun'
-   # email='agtherock13@gmail.com'
-    #bookdatetime=now.strftime("%d-%m-%Y")
-    #sport='badminton'
+class booking():
+    now=datetime.now()
+    username='Arjun'
+    email='agtherock13@gmail.com'
+    #bookdatetime=now.strftime("%d-%m-%Y-%h")
+    bookdatetime='16-05-2003-07'
+    sport='badminton'
     
 
 
@@ -55,7 +56,7 @@ def check(booking):
 
 
 def str2datetime(string):
-    datet = datetime.strptime(string,"%d-%m-%Y")
+    datet = datetime.strptime(string,"%d-%m-%Y-%h")
     return datet
 
 def seeall(booking):
@@ -83,4 +84,18 @@ def week():
     week_ago = today + timedelta(days=7)
     return week_ago
 
+def avail(booking,x):
+    cursor=conn.execute("select datetime from tisb where sport ='"+booking.sport+"'")
+    row=cursor.fetchall()
+    times=[]
+    for i in row:
+        if i[0][:10]==booking.bookdatetime[:10]:
+            times.append(i[0][11:])
+    li=['07','08','09','10','11','12','13','14','15','16','17','18','19','20']
+    availSlots=[]
+    for i in li:
+        if times.count(i)<x:
+            availSlots.append(i)
+    return availSlots
+    
 
