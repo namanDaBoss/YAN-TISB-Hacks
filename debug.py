@@ -3,6 +3,11 @@ import sqlite3
 conn = sqlite3.connect("site.db")
 cursor = conn.cursor()
 
+booking={
+    "bookdatetime":"20-05-2003-07",
+    "username":"naman",
+    "sport":"badminton"
+    }
 
 def book(number_of_courts_available, booking):
     cursor = conn.execute(
@@ -13,7 +18,7 @@ def book(number_of_courts_available, booking):
     if len(row) < number_of_courts_available:
         cursor = conn.execute(
             "insert into tisb(name,datetime,sport)values \
-            (?,?,?,?)",
+            (?,?,?)",
             (booking.get("username"), booking.get(
                 "bookdatetime"), booking.get("sport")),
         )
@@ -21,3 +26,4 @@ def book(number_of_courts_available, booking):
         return True
     else:
         return False
+
