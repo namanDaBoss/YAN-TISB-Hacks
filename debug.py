@@ -10,6 +10,23 @@ booking={
     }
 
 def book(number_of_courts_available, booking):
+    if len(booking.get("bookdatetime")) > 10:
+        timeOfBook = booking.get("bookdatetime")
+        cursor = conn.execute(
+            "select name from tisb where name =? and datetime like ? and sport=?;",
+            (booking.get("username"),
+             timeOfBook[:10] + "%", booking.get("sport")),
+        )
+    else:
+        cursor = conn.execute(
+            "select name from tisb where name =? and datetime =? and sport=?;",
+            (booking.get("username"), booking.get(
+                "bookdatetime"), booking.get("sport")),
+        )
+
+    booksInDay = cursor.fetchall()
+    if len(booksInDay) >= 2:
+        return False
     cursor = conn.execute(
         "select name from tisb where datetime = ? and sport=?;",
         (booking.get("bookdatetime"), booking.get("sport")),
@@ -41,26 +58,6 @@ def showRemainingCourts(booking):
     return remaining
     
     
-def check(booking):
-    if len(booking.get("bookdatetime")) > 10:
-        timeOfBook = booking.get("bookdatetime")
-        cursor = conn.execute(
-            "select username from tisb where name =? and datetime like ? and sport=?;",
-            (booking.get("username"),
-             timeOfBook[:10] + "%", booking.get("sport")),
-        )
-    else:
-        cursor = conn.execute(
-            "select username from tisb where name =? and datetime =? and sport=?;",
-            (booking.get("username"), booking.get(
-                "bookdatetime"), booking.get("sport")),
-        )
-
-    row = cursor.fetchall()
-    if len(row) >= 2:
-        return False
-    else:
-        return True
 
 def str2datetime(string):
     datet = datetime.strptime(string, "%d-%m-%Y-%h")
@@ -102,3 +99,4 @@ def avail(booking):
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
     return availSlots
+book(5,booking)
