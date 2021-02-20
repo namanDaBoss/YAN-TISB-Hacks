@@ -11,12 +11,7 @@ app.secret_key = "somesecretkeythatonlyishouldknow"
 app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
 app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = 'samrath1324@gmail.com'
-app.config['MAIL_PASSWORD'] = 'merinolam'
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
+
 db = SQLAlchemy(app)
 
 
@@ -198,16 +193,11 @@ def str2datetime(string):
 @app.route("/")
 @app.route("/home")
 def home():
+    if is_admin():
+        return render_template("admin_index.html")
     if logged_in():
-        if is_admin():
-            return render_template("admin_index.html")
-        else:
-            return render_template(
-                "index.html", button_content="Booking", button_url=url_for("book_slot")
-            )
-    return render_template(
-        "index.html", button_content="Login", button_url=url_for("login")
-    )
+        return render_template("index.html", button_content="Booking", button_url=url_for("book_slot"))
+    return render_template("index.html", button_content="Login", button_url=url_for("login"))
 
 
 @app.route("/login", methods=["GET", "POST"])
