@@ -81,6 +81,8 @@ def seeall():
     return newli
     
 def avail(booking):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
     number_of_courts_available = 1
     cursor = conn.execute(
         "select datetime from tisb where sport = ?;", (booking.get("sport"),))
@@ -97,7 +99,10 @@ def avail(booking):
     for i in li:
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
     return availSlots
 
 def delete(bookid):
