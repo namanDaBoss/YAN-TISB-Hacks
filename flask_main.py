@@ -87,6 +87,21 @@ def book(booking):
         return False
 
 
+def userDetails(username):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.execute(
+        "select datetime,sport from tisb where name=?;", (username,))
+    userDetails = cursor.fetchall()
+    today = datetime.datetime.now()
+    newli = []
+    for i in userDetails:
+        date = i[2]
+        date = datetime.datetime.strptime(date, "%d-%m-%Y-%H")
+        if date >= today:
+            newli.append(i)
+    return userDetails
+
+
 def seeall():
     conn = sqlite3.connect("site.db")
     cursor = conn.cursor()
@@ -271,11 +286,18 @@ def book_slot():
 
     return redirect(url_for("login"))
 
-@app.route("/seeall-admin")
+@app.route("/seeall-admin/")
 def seeall_admin():
     if is_admin():
         return render_template("all_bookings_admin.html" ,allBookings = seeall())
     else:
         return redirect(url_for("home"))
+
+@app.route("/seeall-user/")
+def seeall_user():
+    if logged_in():
+        return render_template("all_data_user.html", allBookings=userDetails(session["username"]))
+    return redirect(url_for("home"))
+
 if __name__ == "__main__":
     app.run(debug=True)
