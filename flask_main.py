@@ -1,4 +1,3 @@
-from re import S, T
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_admin import Admin
@@ -22,16 +21,12 @@ app.config['MAIL_USE_SSL'] = True
 db = SQLAlchemy(app)
 
 
-
-
 def appropiate_datetime_format(date, time):
     date = date.split("-")
     time = time.split(":")[0]
     appropiate_datetime_format = date[2] + \
         "-" + date[1] + "-" + date[0] + "-" + time
     return appropiate_datetime_format
-
-
 
 
 class User(db.Model):
@@ -50,8 +45,6 @@ class Sport(db.Model):
 
     def __repr__(self):
         return f"<Sport: {self.sport_name}>"
-
-
 
 
 def book(booking):
@@ -140,14 +133,9 @@ admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Sport, db.session))
 
 
-
-
 def str2datetime(string):
     datet = datetime.strptime(string, "%d-%m-%Y-%h")
     return datet
-
-
-
 
 
 @app.route("/")
@@ -187,7 +175,7 @@ def login():
 def logout():
     mail = Mail(app)
     msg = Message('This works bitch', sender='samrath1324@gmail.com',
-                        recipients=['email2namanjain@gmail.com'])
+                  recipients=['email2namanjain@gmail.com'])
     msg.body = "This is the email body"
     mail.send(msg)
     if logged_in():
@@ -221,8 +209,7 @@ def empty_slots232324():
 def empty_slots(sport=""):
     availableSlots = avail(session["booking"])
     session["redirect_from_empty_slots"] = True
-    return render_template("available_slots.html", availSlots=availableSlots, sport = session["booking"].get("sport"))
-
+    return render_template("available_slots.html", availSlots=availableSlots, sport=session["booking"].get("sport"))
 
 
 @app.route("/book-slots", methods=["GET", "POST"])
@@ -240,7 +227,7 @@ def book_slot():
                 "username": session["username"],
                 "bookdatetime": datetime_to_func,
                 "sport": sport_from_form
-                }
+            }
             session["booking"] = booking
             result = book(booking)
             if result == True:
@@ -253,12 +240,11 @@ def book_slot():
             else:
                 return render_template("too_many_bookings.html")
 
-
     if is_admin():
         return redirect("/admin")
 
     if logged_in():
-        return render_template("booking.html", min_date=today(), max_date=week_later(), 
+        return render_template("booking.html", min_date=today(), max_date=week_later(),
                                sports=Sport.query.all())
 
     return redirect(url_for("login"))

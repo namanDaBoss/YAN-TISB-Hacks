@@ -1,8 +1,6 @@
 import sqlite3
 import datetime
 
-conn = sqlite3.connect("site.db")
-cursor = conn.cursor()
 
 booking={
     "bookdatetime":"21-02-2021-14",
@@ -11,6 +9,8 @@ booking={
     }
 
 def book(number_of_courts_available, booking):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
     if len(booking.get("bookdatetime")) > 10:
         timeOfBook = booking.get("bookdatetime")
         cursor = conn.execute(
@@ -46,6 +46,8 @@ def book(number_of_courts_available, booking):
         return False
 
 def showRemainingCourts(booking):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
     number_of_courts_available = (
         Sport.query.filter_by(
             sport_name=booking.get("sport")).first().number_of_courts
@@ -61,23 +63,26 @@ def showRemainingCourts(booking):
     
 
 def str2datetime(string):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
     datet = datetime.strptime(string, "%d-%m-%Y-%h")
     return datet
     
+
 def seeall():
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
     cursor = conn.execute(
-        "select name,datetime from tisb")
-    row = cursor.fetchall()
-    
-    today = datetime.date.today()
-    d1=today.strftime("%d-%m-%Y")
+        "select * from tisb")
+    result = cursor.fetchall()
+    today = datetime.datetime.now()
     newli = []
-    for i in row:
-        date = i[1]
-        #date=dateNtime[:10]
-        if date>=d1:
+    for i in result:
+        date = i[2]
+        date = datetime.datetime.strptime(date, "%d-%m-%Y-%H")
+        if date >= today:
             newli.append(i)
-            
+
     return newli
     
 def avail(booking):
@@ -99,13 +104,10 @@ def avail(booking):
     for i in li:
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
     return availSlots
 
 def delete(bookid):
+    conn = sqlite3.connect("site.db")
     cursor=conn.execute("delete from tisb where id =?;",(str(bookid)))
     conn.commit()
     return "deleted"

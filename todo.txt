@@ -1,2 +1,0 @@
-Make the link for booking slot work.
-Make all booking shown of user to user. Deletion also should work.
