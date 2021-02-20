@@ -104,14 +104,35 @@ def delete(bookid):
     conn.commit()
     return "deleted"
 
+
 def userDetails(username):
     conn = sqlite3.connect("site.db")
     cursor = conn.cursor()
-    cursor=conn.execute("select datetime,sport from tisb where name=?;",(username,))
-    userData=cursor.fetchall()
-    print(userData)
-    return userData
+    cursor = conn.execute(
+        "select * from tisb where name = ?", (username, ))
+    result = cursor.fetchall()
+    today = datetime.datetime.now()
+    newli = []
+    for i in result:
+        date = i[2]
+        date = datetime.datetime.strptime(date, "%d-%m-%Y-%H")
+        if date >= today:
+            date = datetime.datetime.strftime(date, "%d-%m-%Y-%H")
+            time = date[11:]
+            date = date[:10]
+            i = list(i)
+            if int(time) < 12:
+                time = time + " " + "AM"
+            elif int(time) == 12:
+                time = time + " " + "PM"
+            else:
+                time = str(int(time) - 12) + " " + "PM"
+            i[2] = date
+            i.insert(3, time)
+            newli.append(i)
+
+    return newli
 
 
 
-userDetails("yash")
+print(userDetails("Samrath"))
