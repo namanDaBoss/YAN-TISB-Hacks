@@ -1,10 +1,11 @@
-from re import T
+from re import S, T
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 import datetime
 import sqlite3
+from flask_mail import Mail, Message
 
 
 app = Flask(__name__)
@@ -12,6 +13,12 @@ app.secret_key = "somesecretkeythatonlyishouldknow"
 app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
 app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'samrath1324@gmail.com'
+app.config['MAIL_PASSWORD'] = 'merinolam'
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 db = SQLAlchemy(app)
 
 
@@ -88,6 +95,32 @@ def book(booking):
         return False
 
 
+def avail(booking):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
+    number_of_courts_available = 1
+    cursor = conn.execute(
+        "select datetime from tisb where sport = ?;", (booking.get("sport"),))
+
+    result = cursor.fetchall()
+    times = []
+    for i in result:
+        bookingTime = booking.get("bookdatetime")
+        if i[0][:10] == bookingTime[:10]:
+            times.append(i[0][11:])
+    li = ["07", "08", "09", "10", "11", "12", "13",
+          "14", "15", "16", "17", "18", "19", "20", ]
+    availSlots = []
+    for i in li:
+        if times.count(i) < number_of_courts_available:
+            availSlots.append(i)
+    newAvailSlots = []
+    for i in availSlots:
+        if int(i) <= 12:
+          newAvailSlots.append(i + " AM")
+        else:
+          newAvailSlots.append(str(int(i) - 12) + " PM")
+    return newAvailSlots
 
 
 def is_admin():
@@ -152,6 +185,11 @@ def login():
 
 @app.route("/logout")
 def logout():
+    mail = Mail(app)
+    msg = Message('This works bitch', sender='samrath1324@gmail.com',
+                        recipients=['email2namanjain@gmail.com'])
+    msg.body = "This is the email body"
+    mail.send(msg)
     if logged_in():
         session.clear()
     return redirect(url_for("login"))
@@ -181,48 +219,10 @@ def empty_slots232324():
 
 @app.route("/empty-slots/<string:sport>")
 def empty_slots(sport=""):
-    if "can_book" in session:
-        if "booking" in session and session["can_book"]==True:
-            with sqlite3.connect("site.db") as conn:
-                booking = session["booking"]
-                number_of_courts_available = 1
-                cursor = conn.execute(
-                    "select datetime from tisb where sport =?;", (booking.get("sport"),))
-                row = cursor.fetchall()
-                times = []
-                for i in row:
-                    bookingTime = booking.get("bookdatetime")
-                    if i[0][:10] == bookingTime[:10]:
-                        times.append(i[0][11:])
-                li = range(7, 21)
-                availSlots = []
-                availSlots_to_HTML = []
-                for i in li:
-                    if times.count(i) < number_of_courts_available:
-                        availSlots.append(i)
-                for i in range(len(availSlots)):
-                    if int(availSlots[i]) < 12:
-                        availSlots_to_HTML.append(str(availSlots[i]) + " " + "AM")
-                    else:
-                        availSlots_to_HTML.append(str(availSlots[i] - 12) + " " + "PM")
-                session.pop("can_book", None)
-                newAvailSlots = []
-                for i in availSlots:
-                    if i <= 12:
-                        newAvailSlots.append(str(i) + " AM")
-                    else:
-                        newAvailSlots.append(str(i - 12) + " PM")
-                session["redirect_from_empty_slots"] = True
-                return render_template("available_slots.html", availSlots=newAvailSlots, sport = booking.get("sport"))
-    return redirect(url_for("login"))
+    availableSlots = avail(session["booking"])
+    session["redirect_from_empty_slots"] = True
+    return render_template("available_slots.html", availSlots=availableSlots, sport = session["booking"].get("sport"))
 
-@app.route("/book-specific-time/<time>")
-def book_specific_time(time):
-    if "redirect_from_empty_slots" in session:
-        session.pop("redirect_from_empty_slots", None)
-        #TODO: I NEED TO ASK NAMAN FOR A FUNCTION THAT RETURNS IF SUCCESFUL OR NOT.
-        #THIS WILL BOOK IF SUCCESFUL REDIRECT TO THAT PAGE AND ASK IF THEY WANT TO LOGOUT, GO HOME OR BOOK ANOTHER SLOT
-    
 
 
 @app.route("/book-slots", methods=["GET", "POST"])
@@ -240,7 +240,7 @@ def book_slot():
                 "username": session["username"],
                 "bookdatetime": datetime_to_func,
                 "sport": sport_from_form
-            }
+                }
             session["booking"] = booking
             result = book(booking)
             if result == True:
@@ -248,10 +248,10 @@ def book_slot():
                                        message2="You can now book another slot or logout.",
                                        home_and_login=True)
             elif result == False:
-                a = "/empty-slots/" + booking.get("sport")
-                return redirect(a)
+                empty_slots_page = "/empty-slots/" + booking.get("sport")
+                return redirect(empty_slots_page)
             else:
-                return "A"
+                return render_template("too_many_bookings.html")
 
 
     if is_admin():
