@@ -4,7 +4,6 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 import datetime
 import sqlite3
-from flask_mail import Mail, Message
 
 
 app = Flask(__name__)
