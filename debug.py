@@ -1,8 +1,7 @@
 import sqlite3
 import datetime
 
-conn = sqlite3.connect("site.db")
-cursor = conn.cursor()
+
 
 #booking={
  #   "bookdatetime":"21-02-2021-14",
@@ -106,6 +105,8 @@ def delete(bookid):
     return "deleted"
 
 def userDetails(username):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
     cursor=conn.execute("select datetime,sport from tisb where name=?;",(username,))
     userData=cursor.fetchall()
     print(userData)
