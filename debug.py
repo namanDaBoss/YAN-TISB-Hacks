@@ -82,7 +82,11 @@ def seeall():
         date = datetime.datetime.strptime(date, "%d-%m-%Y-%H")
         if date >= today:
             newli.append(i)
+<<<<<<< Updated upstream
 
+=======
+    print(newli)
+>>>>>>> Stashed changes
     return newli
     
 def avail(booking):
