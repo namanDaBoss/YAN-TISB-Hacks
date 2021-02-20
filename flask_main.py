@@ -258,7 +258,8 @@ def book_slot():
         return redirect("/admin")
 
     if logged_in():
-        return render_template("booking.html", min_date=today(), max_date=week_later())
+        return render_template("booking.html", min_date=today(), max_date=week_later(), 
+                               sports=Sport.query.all())
 
     return redirect(url_for("login"))
 

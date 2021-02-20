@@ -46,11 +46,9 @@
             </div>
             <label for="sport">Choose your sport: </label>
             <select class="form-control" id="sport" name="sport" required>
-              <option>Tennis</option>
-              <option>Badminton</option>
-              <option>Table Tennis</option>
-              <option>Billiards</option>
-              <option>Pool</option>
+              {% for i in sports %}
+              <option> {{ i.sport_name }}
+              {% endfor %}
             </select>
             <br><br>
             <div class="col-auto mbr-section-btn align-center">
