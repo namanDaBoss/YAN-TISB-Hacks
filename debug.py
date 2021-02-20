@@ -1,16 +1,16 @@
 import sqlite3
 import datetime
 
+conn = sqlite3.connect("site.db")
+cursor = conn.cursor()
 
 booking={
     "bookdatetime":"21-02-2021-14",
-    "username":"arjun",
+    "username":"yash",
     "sport":"Pool"
     }
 
 def book(number_of_courts_available, booking):
-    conn = sqlite3.connect("site.db")
-    cursor = conn.cursor()
     if len(booking.get("bookdatetime")) > 10:
         timeOfBook = booking.get("bookdatetime")
         cursor = conn.execute(
@@ -46,8 +46,6 @@ def book(number_of_courts_available, booking):
         return False
 
 def showRemainingCourts(booking):
-    conn = sqlite3.connect("site.db")
-    cursor = conn.cursor()
     number_of_courts_available = (
         Sport.query.filter_by(
             sport_name=booking.get("sport")).first().number_of_courts
@@ -63,35 +61,26 @@ def showRemainingCourts(booking):
     
 
 def str2datetime(string):
-    conn = sqlite3.connect("site.db")
-    cursor = conn.cursor()
     datet = datetime.strptime(string, "%d-%m-%Y-%h")
     return datet
     
-
 def seeall():
-    conn = sqlite3.connect("site.db")
-    cursor = conn.cursor()
     cursor = conn.execute(
-        "select * from tisb")
-    result = cursor.fetchall()
-    today = datetime.datetime.now()
+        "select name,datetime from tisb")
+    row = cursor.fetchall()
+    
+    today = datetime.date.today()
+    d1=today.strftime("%d-%m-%Y")
     newli = []
-    for i in result:
-        date = i[2]
-        date = datetime.datetime.strptime(date, "%d-%m-%Y-%H")
-        if date >= today:
+    for i in row:
+        date = i[1]
+        #date=dateNtime[:10]
+        if date>=d1:
             newli.append(i)
-<<<<<<< Updated upstream
-
-=======
     print(newli)
->>>>>>> Stashed changes
     return newli
     
 def avail(booking):
-    conn = sqlite3.connect("site.db")
-    cursor = conn.cursor()
     number_of_courts_available = 1
     cursor = conn.execute(
         "select datetime from tisb where sport = ?;", (booking.get("sport"),))
@@ -108,20 +97,20 @@ def avail(booking):
     for i in li:
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
+
     return availSlots
 
 def delete(bookid):
-    conn = sqlite3.connect("site.db")
     cursor=conn.execute("delete from tisb where id =?;",(str(bookid)))
     conn.commit()
     return "deleted"
 
-def userDetails(booking):
-    username=booking.get("username")
+def userDetails(username):
     cursor=conn.execute("select datetime,sport from tisb where name=?;",(username,))
     userData=cursor.fetchall()
-    
+    print(userData)
     return userData
 
 
-seeall()
+
+userDetails("naman")
