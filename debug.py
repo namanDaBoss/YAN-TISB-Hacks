@@ -4,11 +4,11 @@ import datetime
 conn = sqlite3.connect("site.db")
 cursor = conn.cursor()
 
-booking={
-    "bookdatetime":"21-02-2021-14",
-    "username":"yash",
-    "sport":"Pool"
-    }
+#booking={
+ #   "bookdatetime":"21-02-2021-14",
+  #  "username":"yash",
+   # "sport":"Pool"
+    #}
 
 def book(number_of_courts_available, booking):
     if len(booking.get("bookdatetime")) > 10:
@@ -113,4 +113,4 @@ def userDetails(username):
 
 
 
-userDetails("naman")
+userDetails("yash")

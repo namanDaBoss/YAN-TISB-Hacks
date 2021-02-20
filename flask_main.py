@@ -4,7 +4,6 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 import datetime
 import sqlite3
-from flask_mail import Mail, Message
 
 
 app = Flask(__name__)
@@ -86,6 +85,49 @@ def book(booking):
     else:
         session["can_book"] = True
         return False
+
+
+def userDetails(username):
+    conn = sqlite3.connect("site.db")
+    cursor = conn.execute(
+        "select datetime,sport from tisb where name=?;", (username,))
+    userDetails = cursor.fetchall()
+    today = datetime.datetime.now()
+    newli = []
+    for i in userDetails:
+        date = i[2]
+        date = datetime.datetime.strptime(date, "%d-%m-%Y-%H")
+        if date >= today:
+            newli.append(i)
+    return userDetails
+
+
+def seeall():
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
+    cursor = conn.execute(
+        "select * from tisb")
+    result = cursor.fetchall()
+    today = datetime.datetime.now()
+    newli = []
+    for i in result:
+        date = i[2]
+        date = datetime.datetime.strptime(date, "%d-%m-%Y-%H")
+        if date >= today:
+            date = datetime.datetime.strftime(date, "%d-%m-%Y-%H")
+            time = date[11:]
+            date = date[:10]
+            i = list(i)
+            if int(time) < 12:
+                time = time + " " + "AM"
+            else:
+                time = time + " " + "PM"
+            i[2] = date
+            i.insert(3, time)
+            newli.append(i)
+
+    return newli
+
 
 
 def avail(booking):
@@ -173,11 +215,6 @@ def login():
 
 @app.route("/logout")
 def logout():
-    mail = Mail(app)
-    msg = Message('This works bitch', sender='samrath1324@gmail.com',
-                  recipients=['email2namanjain@gmail.com'])
-    msg.body = "This is the email body"
-    mail.send(msg)
     if logged_in():
         session.clear()
     return redirect(url_for("login"))
@@ -249,6 +286,18 @@ def book_slot():
 
     return redirect(url_for("login"))
 
+@app.route("/seeall-admin/")
+def seeall_admin():
+    if is_admin():
+        return render_template("all_bookings_admin.html" ,allBookings = seeall())
+    else:
+        return redirect(url_for("home"))
+
+@app.route("/seeall-user/")
+def seeall_user():
+    if logged_in():
+        return render_template("all_data_user.html", allBookings=userDetails(session["username"]))
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
     app.run(debug=True)
