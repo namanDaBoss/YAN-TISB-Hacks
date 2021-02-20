@@ -1,8 +1,7 @@
 import sqlite3
 import datetime
 
-conn = sqlite3.connect("site.db")
-cursor = conn.cursor()
+
 
 booking={
     "bookdatetime":"20-05-2003-07",
@@ -10,7 +9,11 @@ booking={
     "sport":"badminton"
     }
 
-def book(number_of_courts_available, booking):
+def book(booking):
+    number_of_courts_available = (Sport.query.filter_by(
+        sport_name=booking.get("sport")).first().number_of_courts)
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
     if len(booking.get("bookdatetime")) > 10:
         timeOfBook = booking.get("bookdatetime")
         cursor = conn.execute(
@@ -41,15 +44,13 @@ def book(number_of_courts_available, booking):
                 "bookdatetime"), booking.get("sport")),
         )
         conn.commit()
+        sqlite3.
         return True
     else:
         return False
 
 def showRemainingCourts(booking):
-    number_of_courts_available = (
-        Sport.query.filter_by(
-            sport_name=booking.get("sport")).first().number_of_courts
-    )
+    number_of_courts_available = (Sport.query.filter_by(sport_name=booking.get("sport")).first().number_of_courts)
     cursor = conn.execute(
         "select name from tisb where datetime = ? and sport=?;", (booking.get(
             "bookdatetime"),booking.get("sport"))

@@ -1,3 +1,4 @@
+from re import T
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_admin import Admin
@@ -24,6 +25,8 @@ def appropiate_datetime_format(date, time):
     return appropiate_datetime_format
 
 
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -40,6 +43,51 @@ class Sport(db.Model):
 
     def __repr__(self):
         return f"<Sport: {self.sport_name}>"
+
+
+
+
+def book(booking):
+    number_of_courts_available = (Sport.query.filter_by(
+        sport_name=booking.get("sport")).first().number_of_courts)
+    conn = sqlite3.connect("site.db")
+    cursor = conn.cursor()
+    if len(booking.get("bookdatetime")) > 10:
+        timeOfBook = booking.get("bookdatetime")
+        cursor = conn.execute(
+            "select name from tisb where name =? and datetime like ? and sport=?;",
+            (booking.get("username"),
+             timeOfBook[:10] + "%", booking.get("sport")),
+        )
+    else:
+        cursor = conn.execute(
+            "select name from tisb where name =? and datetime =? and sport=?;",
+            (booking.get("username"), booking.get(
+                "bookdatetime"), booking.get("sport")),
+        )
+
+    booksInDay = cursor.fetchall()
+    if len(booksInDay) >= 2:
+        return "False"
+    cursor = conn.execute(
+        "select name from tisb where datetime = ? and sport=?;",
+        (booking.get("bookdatetime"), booking.get("sport")),
+    )
+    row = cursor.fetchall()
+    if len(row) < number_of_courts_available:
+        cursor = conn.execute(
+            "insert into tisb(name,datetime,sport)values \
+            (?,?,?)",
+            (booking.get("username"), booking.get(
+                "bookdatetime"), booking.get("sport")),
+        )
+        conn.commit()
+        return True
+    else:
+        session["can_book"] = True
+        return False
+
+
 
 
 def is_admin():
@@ -59,9 +107,13 @@ admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Sport, db.session))
 
 
+
+
 def str2datetime(string):
     datet = datetime.strptime(string, "%d-%m-%Y-%h")
     return datet
+
+
 
 
 
@@ -121,37 +173,57 @@ def week_later():
     week_later = today + datetime.timedelta(days=7)
     return week_later
 
+
 @app.route("/empty-slots")
 def empty_slots232324():
     return redirect(url_for("home"))
 
+
 @app.route("/empty-slots/<string:sport>")
 def empty_slots(sport=""):
-    if "booking" in session:
-        with sqlite3.connect("site.db") as conn:
-            booking = session["booking"]
-            number_of_courts_available = 1
-            cursor = conn.execute(
-                "select datetime from tisb where sport =?;", (booking.get("sport"),))
-            row = cursor.fetchall()
-            times = []
-            for i in row:
-                bookingTime = booking.get("bookdatetime")
-                if i[0][:10] == bookingTime[:10]:
-                    times.append(i[0][11:])
-            li = ["07", "08", "09", "10", "11", "12", "13",
-                "14", "15", "16", "17", "18", "19", "20", ]
-            availSlots = []
-            for i in li:
-                if times.count(i) < number_of_courts_available:
-                    availSlots.append(i)
-            for i in range(len(availSlots)):
-                if int(availSlots[i]) > 12:
-                    availSlots[i] = availSlots[i] + " " + "AM"
-                else:
-                    availSlots[i] = availSlots[i] + " " + "PM"
-            return render_template("available_slots.html", availSlots=availSlots)
+    if "can_book" in session:
+        if "booking" in session and session["can_book"]==True:
+            with sqlite3.connect("site.db") as conn:
+                booking = session["booking"]
+                number_of_courts_available = 1
+                cursor = conn.execute(
+                    "select datetime from tisb where sport =?;", (booking.get("sport"),))
+                row = cursor.fetchall()
+                times = []
+                for i in row:
+                    bookingTime = booking.get("bookdatetime")
+                    if i[0][:10] == bookingTime[:10]:
+                        times.append(i[0][11:])
+                li = range(7, 21)
+                availSlots = []
+                availSlots_to_HTML = []
+                for i in li:
+                    if times.count(i) < number_of_courts_available:
+                        availSlots.append(i)
+                for i in range(len(availSlots)):
+                    if int(availSlots[i]) < 12:
+                        availSlots_to_HTML.append(str(availSlots[i]) + " " + "AM")
+                    else:
+                        availSlots_to_HTML.append(str(availSlots[i] - 12) + " " + "PM")
+                session.pop("can_book", None)
+                newAvailSlots = []
+                for i in availSlots:
+                    if i <= 12:
+                        newAvailSlots.append(str(i) + " AM")
+                    else:
+                        newAvailSlots.append(str(i - 12) + " PM")
+                session["redirect_from_empty_slots"] = True
+                return render_template("available_slots.html", availSlots=newAvailSlots, sport = booking.get("sport"))
     return redirect(url_for("login"))
+
+@app.route("/book-specific-time/<time>")
+def book_specific_time(time):
+    if "redirect_from_empty_slots" in session:
+        session.pop("redirect_from_empty_slots", None)
+        #TODO: I NEED TO ASK NAMAN FOR A FUNCTION THAT RETURNS IF SUCCESFUL OR NOT.
+        #THIS WILL BOOK IF SUCCESFUL REDIRECT TO THAT PAGE AND ASK IF THEY WANT TO LOGOUT, GO HOME OR BOOK ANOTHER SLOT
+    
+
 
 @app.route("/book-slots", methods=["GET", "POST"])
 def book_slot():
@@ -164,53 +236,23 @@ def book_slot():
         datetime_to_func = appropiate_datetime_format(date, time)
 
         if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
-            number_of_courts_available = 2
             booking = {
                 "username": session["username"],
                 "bookdatetime": datetime_to_func,
                 "sport": sport_from_form
             }
             session["booking"] = booking
-            with sqlite3.connect("site.db") as conn:
-                number_of_courts_available = (
-                    Sport.query.filter_by(
-                        sport_name=booking.get("sport")).first().number_of_courts
-                )
-                if len(booking.get("bookdatetime")) > 10:
-                    timeOfBook = booking.get("bookdatetime")
-                    cursor = conn.execute(
-                        "select name from tisb where name =? and datetime like ? and sport=?;",
-                        (booking.get("username"),
-                        timeOfBook[:10] + "%", booking.get("sport")),
-                    )
-                else:
-                    cursor = conn.execute(
-                        "select name from tisb where name =? and datetime =? and sport=?;",
-                        (booking.get("username"), booking.get(
-                            "bookdatetime"), booking.get("sport")),
-                    )
+            result = book(booking)
+            if result == True:
+                return render_template("one_message.html", message="Booking successful!",
+                                       message2="You can now book another slot or logout.",
+                                       home_and_login=True)
+            elif result == False:
+                a = "/empty-slots/" + booking.get("sport")
+                return redirect(a)
+            else:
+                return "A"
 
-                booksInDay = cursor.fetchall()
-                if len(booksInDay) >= 2:
-                    return "<h1>You have reached your booking limitation in this sport for today</h1>"
-                cursor = conn.execute(
-                    "select name from tisb where datetime = ? and sport=?;",
-                    (booking.get("bookdatetime"), booking.get("sport")),
-                )
-                row = cursor.fetchall()
-                if len(row) < number_of_courts_available:
-                    cursor = conn.execute(
-                        "insert into tisb(name,datetime,sport)values \
-                        (?,?,?)",
-                        (booking.get("username"), booking.get(
-                            "bookdatetime"), booking.get("sport")),
-                    )
-                    conn.commit()
-                    return "<h1>True</h1>"
-                else:
-                    a = "/empty-slots" + "/" + booking["sport"]
-                    return redirect(a)
-#ANYASH
 
     if is_admin():
         return redirect("/admin")
