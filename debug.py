@@ -1,19 +1,16 @@
 import sqlite3
 import datetime
 
-
+conn = sqlite3.connect("site.db")
+cursor = conn.cursor()
 
 booking={
-    "bookdatetime":"20-05-2003-07",
+    "bookdatetime":"21-02-2021-14",
     "username":"arjun",
-    "sport":"badminton"
+    "sport":"Pool"
     }
 
-def book(booking):
-    number_of_courts_available = (Sport.query.filter_by(
-        sport_name=booking.get("sport")).first().number_of_courts)
-    conn = sqlite3.connect("site.db")
-    cursor = conn.cursor()
+def book(number_of_courts_available, booking):
     if len(booking.get("bookdatetime")) > 10:
         timeOfBook = booking.get("bookdatetime")
         cursor = conn.execute(
@@ -44,13 +41,15 @@ def book(booking):
                 "bookdatetime"), booking.get("sport")),
         )
         conn.commit()
-        sqlite3.
         return True
     else:
         return False
 
 def showRemainingCourts(booking):
-    number_of_courts_available = (Sport.query.filter_by(sport_name=booking.get("sport")).first().number_of_courts)
+    number_of_courts_available = (
+        Sport.query.filter_by(
+            sport_name=booking.get("sport")).first().number_of_courts
+    )
     cursor = conn.execute(
         "select name from tisb where datetime = ? and sport=?;", (booking.get(
             "bookdatetime"),booking.get("sport"))
@@ -84,10 +83,11 @@ def seeall(booking):
 def avail(booking):
     number_of_courts_available = 1
     cursor = conn.execute(
-        "select datetime from tisb where sport =?;", (booking.get("sport"),))
-    row = cursor.fetchall()
+        "select datetime from tisb where sport = ?;", (booking.get("sport"),))
+
+    result=cursor.fetchall()
     times = []
-    for i in row:
+    for i in result:
         bookingTime = booking.get("bookdatetime")
         if i[0][:10] == bookingTime[:10]:
             times.append(i[0][11:])
@@ -97,6 +97,8 @@ def avail(booking):
     for i in li:
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
+
+    print(availSlots)
     return availSlots
 
 def delete(bookid):
@@ -108,5 +110,8 @@ def userDetails(booking):
     username=booking.get("username")
     cursor=conn.execute("select datetime,sport from tisb where name=?;",(username,))
     userData=cursor.fetchall()
+    
     return userData
 
+
+avail(booking)
