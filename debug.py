@@ -64,20 +64,20 @@ def str2datetime(string):
     datet = datetime.strptime(string, "%d-%m-%Y-%h")
     return datet
     
-def seeall(booking):
+def seeall():
     cursor = conn.execute(
-        "select name,datetime from tisb where sport = ?;", (
-            booking.get("sport"),)
-    )
-
+        "select name,datetime from tisb")
     row = cursor.fetchall()
-
+    
+    today = datetime.date.today()
+    d1=today.strftime("%d-%m-%Y")
     newli = []
     for i in row:
-        a = list(i)
-        a[2] = str2datetime(a[2])
-        newli.append(a)
-
+        date = i[1]
+        #date=dateNtime[:10]
+        if date>=d1:
+            newli.append(i)
+            
     return newli
     
 def avail(booking):
@@ -98,7 +98,6 @@ def avail(booking):
         if times.count(i) < number_of_courts_available:
             availSlots.append(i)
 
-    print(availSlots)
     return availSlots
 
 def delete(bookid):
@@ -114,4 +113,4 @@ def userDetails(booking):
     return userData
 
 
-avail(booking)
+seeall()
