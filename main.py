@@ -11,6 +11,7 @@ app.secret_key = "somesecretkeythatonlyishouldknow"
 app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
 app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
@@ -172,7 +173,7 @@ class MyModelView(ModelView):
         return is_admin()
 
 
-admin = Admin(app, name="Sports Booking", template_mode="bootstrap4")
+admin = Admin(app, name="Sports Booking", template_mode="bootstrap3")
 admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Sport, db.session))
 
