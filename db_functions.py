@@ -2,10 +2,13 @@ import sqlite3
 import datetime
 
 
-def appropiate_datetime_format(date, time):
-    date = date.split("-")
-    time = time.split(":")[0]
-    return date[2] + "-" + date[1] + "-" + date[0] + "-" + time
+def today():
+    return datetime.date.today()
+
+
+def week_later():
+    today = datetime.date.today()
+    return today + datetime.timedelta(days=7)
 
 def str2datetime(string):
     return datetime.strptime(string, "%d-%m-%Y-%h")
