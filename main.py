@@ -64,7 +64,7 @@ class BookingForm(FlaskForm):
     date = DateField('Date:', format='%d-%m-%Y', validators=[validators.DataRequired()],
                      render_kw={"min": today(), "max": week_later()})
     time = TimeField('Time:', validators=[validators.DataRequired()],
-                     format='%H:%M:%S', render_kw={"step": "3600", "min": "07:00", "max": "20:00"})
+                     format='%T:%H:%M', render_kw={"step": "3600", "min": "07:00", "max": "20:00"})
     sport = SelectField(
         "Sport:", choices=[i.sport_name for i in Sport.query.all()])
     submit = SubmitField('Submit')
@@ -124,7 +124,7 @@ def empty_slots(sport=""):
 @app.route("/book-slots", methods=["GET", "POST"])
 def book_slot():
     form = BookingForm()
-    if request.method == 'POST' and form.validate_on_submit() and not is_admin() and logged_in():
+    if request.method == 'POST' and form.is_submitted() and not is_admin() and logged_in():
         date = form.date.data
         time = form.time.data
         sport_from_form = form.sport.data
