@@ -3,9 +3,11 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from db_functions import book, userDetails, seeall, avail, str2datetime, today, week_later
 from flask_wtf import FlaskForm
-from wtforms import TextField, PasswordField, SelectField, validators
+from wtforms import TextField, SubmitField, PasswordField, SelectField, validators
 from wtforms.fields.html5 import DateField, TimeField
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
+
 
 app = Flask(__name__)
 app.secret_key = "somesecretkeythatonlyishouldknow"
@@ -14,8 +16,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
 app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+csrf = CSRFProtect(app)
 
 db = SQLAlchemy(app)
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,16 +54,20 @@ admin.add_view(MyModelView(Sport, db.session))
 
 
 class LoginForm(FlaskForm):
-    username = TextField([validators.DataRequired()], render_kw = {"placeholder": "Username"})
-    password = PasswordField([validators.DataRequired()], render_kw = {"placeholder": "Password"})
+    username = TextField([validators.DataRequired()],
+                         render_kw={"placeholder": "Username"})
+    password = PasswordField([validators.DataRequired()], render_kw={
+                             "placeholder": "Password"})
 
 
-class ExampleForm(FlaskForm):
-    date = DateField('Date:', format='%d-%m-%Y', validators = [validators.DataRequired()],
-    render_kw = {"min": today(), "max": week_later()})
-    time = TimeField('Time:', validators = [validators.DataRequired()],
-    format= '%H:%M:%S', render_kw = {"step": "3600","min": "07:00", "max":"20:00"})
-    sport = SelectField("Sport", choices = [i.sport_name for i in Sport.query.all()])
+class BookingForm(FlaskForm):
+    date = DateField('Date:', format='%d-%m-%Y', validators=[validators.DataRequired()],
+                     render_kw={"min": today(), "max": week_later()})
+    time = TimeField('Time:', validators=[validators.DataRequired()],
+                     format='%H:%M:%S', render_kw={"step": "3600", "min": "07:00", "max": "20:00"})
+    sport = SelectField(
+        "Sport:", choices=[i.sport_name for i in Sport.query.all()])
+    submit = SubmitField('Submit')
 
 
 @app.route("/")
@@ -100,7 +108,6 @@ def logged_in():
     return "username" in session
 
 
-
 @app.route("/empty-slots")
 def empty_slots232324():
     return redirect(url_for("home"))
@@ -111,27 +118,26 @@ def empty_slots(sport=""):
     availableSlots = avail(session["booking"])
     session["redirect_from_empty_slots"] = True
     return render_template("available_slots.html", availSlots=availableSlots,
-        sport=session["booking"].get("sport"))
+                           sport=session["booking"].get("sport"))
 
 
 @app.route("/book-slots", methods=["GET", "POST"])
 def book_slot():
-    if request.method == "POST" and not is_admin() and logged_in():
-
-        date = request.form["date"]
-        time = request.form["time"]
-        sport_from_form = request.form["sport"]
-
+    form = BookingForm()
+    if request.method == 'POST' and form.validate_on_submit() and not is_admin() and logged_in():
+        date = form.date.data
+        time = form.time.data
+        sport_from_form = form.sport.data
         datetime_object = date + time.split(":")[0]
 
         if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
             booking = {
                 "username": session["username"],
-                "bookdatetime": datetime_to_func,
+                "bookdatetime": datetime_object,
                 "sport": sport_from_form
             }
             session["booking"] = booking
-            result = book(booking, number_of_courts_available = Sport.query.filter_by(
+            result = book(booking, number_of_courts_available=Sport.query.filter_by(
                 sport_name=booking.get("sport")).first().number_of_courts)
             if result == True:
                 return render_template("one_message.html", message="Booking successful!",
@@ -147,8 +153,7 @@ def book_slot():
         return redirect("/admin")
 
     if logged_in():
-        return render_template("booking.html", min_date=today(), max_date=week_later(),
-                               sports=Sport.query.all())
+        return render_template("booking.html", form = form)
 
     return redirect(url_for("login"))
 
@@ -169,4 +174,4 @@ def seeall_user():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port = 3300)
+    app.run(debug=True, port=3300)
