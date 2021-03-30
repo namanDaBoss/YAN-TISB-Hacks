@@ -1,11 +1,10 @@
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from db_functions import book, userDetails, seeall, avail, str2datetime, today, week_later
-from flask_wtf import FlaskForm
-from wtforms import TextField, PasswordField, SelectField, validators
-from wtforms.fields.html5 import DateField, TimeField
-from flask_sqlalchemy import SQLAlchemy
+import datetime
+from db_functions import appropiate_datetime_format, book, userDetails, seeall, avail, str2datetime
+from models import db, User, Sport
+
 
 app = Flask(__name__)
 app.secret_key = "somesecretkeythatonlyishouldknow"
@@ -14,25 +13,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
 app.config["FLASK_ADMIN_SWATCH"] = "cerulean"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
-db = SQLAlchemy(app)
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
-
-    def __repr__(self):
-        return f"<User: {self.username}>"
-
-
-class Sport(db.Model):
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    number_of_courts = db.Column(db.Integer)
-    sport_name = db.Column(db.String(30), unique=True, nullable=False)
-
-    def __repr__(self):
-        return f"<Sport: {self.sport_name}>"
+db.init_app(app)
 
 
 def is_admin():
@@ -49,17 +30,6 @@ admin.add_view(MyModelView(User, db.session))
 admin.add_view(MyModelView(Sport, db.session))
 
 
-class LoginForm(FlaskForm):
-    username = TextField([validators.DataRequired()], render_kw = {"placeholder": "Username"})
-    password = PasswordField([validators.DataRequired()], render_kw = {"placeholder": "Password"})
-
-
-class ExampleForm(FlaskForm):
-    date = DateField('Date:', format='%d-%m-%Y', validators = [validators.DataRequired()],
-    render_kw = {"min": today(), "max": week_later()})
-    time = TimeField('Time:', validators = [validators.DataRequired()],
-    format= '%H:%M:%S', render_kw = {"step": "3600","min": "07:00", "max":"20:00"})
-    sport = SelectField("Sport", choices = [i.sport_name for i in Sport.query.all()])
 
 
 @app.route("/")
@@ -100,6 +70,14 @@ def logged_in():
     return "username" in session
 
 
+def today():
+    return datetime.date.today()
+
+
+def week_later():
+    today = datetime.date.today()
+    return today + datetime.timedelta(days=7)
+
 
 @app.route("/empty-slots")
 def empty_slots232324():
@@ -122,7 +100,7 @@ def book_slot():
         time = request.form["time"]
         sport_from_form = request.form["sport"]
 
-        datetime_object = date + time.split(":")[0]
+        datetime_to_func = appropiate_datetime_format(date, time)
 
         if Sport.query.filter_by(sport_name=sport_from_form).first() is not None:
             booking = {
