@@ -48,6 +48,7 @@ def book(booking, number_of_courts_available):
         conn.commit()
         return True
     else:
+        session["can_book"] = True
         return False
 
 

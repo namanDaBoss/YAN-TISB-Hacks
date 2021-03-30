@@ -1,6 +1,5 @@
 <html>
-
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="generator" content="Mobirise v5.2.0, mobirise.com">
@@ -17,45 +16,49 @@
     <link rel="stylesheet" href="static/assets/theme/css/style.css">
     <link rel="preload" as="style" href="static/assets/mobirise/css/mbr-additional.css">
     <link rel="stylesheet" href="static/assets/mobirise/css/mbr-additional.css" type="text/css">
-</head>
-
-<body>
+  </head>
+  <body>
     <section class="form7 cid-spqAfoZOsq" id="form7-2">
-        <div class="mbr-overlay"></div>
-        <div class="container-fluid">
-            <div class="mbr-section-head">
-                <h3 class="mbr-section-title mbr-fonts-style align-center mb-0 display-2">
-                    <strong>Book your slot</strong>
-                    <br>
-                </h3>
-                <h4 align="center">All bookings are only for one hour periods</h4>
+    <div class="mbr-overlay"></div>
+    <div class="container-fluid">
+      <div class="mbr-section-head">
+        <h3 class="mbr-section-title mbr-fonts-style align-center mb-0 display-2">
+          <strong>Book your slot</strong>
+          <br>
+        </h3>
+        <h4 align="center">All bookings are only for one hour periods</h4>
+      </div>
+      <div class="row justify-content-center mt-4">
+        <div class="col-lg-8 mx-auto mbr-form">
+          <form method="POST" class="mbr-form form-with-styler mx-auto">
+            <div class="">
+              <div hidden="hidden" data-form-alert-danger="" class="alert alert-danger col-12"></div>
             </div>
-            <div class="row justify-content-center mt-4">
-                <div class="col-lg-8 mx-auto mbr-form">
-                    <form method="POST" class="mbr-form form-with-styler mx-auto">
-                        {{ form.csrf_token }}
-                        <div class="">
-                            <div hidden="hidden" data-form-alert-danger="" class="alert alert-danger col-12"></div>
-                        </div>
-                        <div class="dragArea row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 form-group" data-for="email">
-                                {{ form.date.label }}<br>{{ form.date }}
-                            </div>
-                            <div class="col-lg-12 col-md-12 col-sm-12 form-group" data-for="email">
-                                {{ form.time.label }}<br>{{ form.time }}
-                            </div>
-                        </div>
-                        {{ form.sport.label }}<br>{{ form.sport }}
-                        <br><br>
-                        <div class="col-auto mbr-section-btn align-center">
-                            {{ submit }}
-                        </div>
-                </div>
+            <div class="dragArea row">
+              <div class="col-lg-12 col-md-12 col-sm-12 form-group" data-for="email">
+              <label for="date">Date:<br></label>
+                <input type="date" id="date" name="date" min="{{ min_date }}" max="{{ max_date }}" required>
+              </div>
+              <div class="col-lg-12 col-md-12 col-sm-12 form-group" data-for="email">
+                <label for="time">Time:<br></label>
+                <input type="time" id="time" name="time" step="3600" min="07:00" max="20:00" required>
+              </div>
             </div>
-            </form>
+            <label for="sport">Choose your sport: </label>
+            <select class="form-control" id="sport" name="sport" required>
+              {% for i in sports %}
+              <option> {{ i.sport_name }}
+              {% endfor %}
+            </select>
+            <br><br>
+            <div class="col-auto mbr-section-btn align-center">
+              <button type="submit" class="btn btn-primary display-4">Submit</button>
+            </div>
         </div>
-        </div>
-        </div>
-</body>
-
+      </div>
+      </form>
+    </div>
+    </div>
+    </div>
+  </body>
 </html>
