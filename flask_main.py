@@ -111,6 +111,7 @@ def userDetails(username):
     return newli
 
 
+
 def seeall():
     conn = sqlite3.connect("site.db")
     cursor = conn.cursor()
@@ -129,15 +130,14 @@ def seeall():
             i = list(i)
             if int(time) < 12:
                 time = time + " " + "AM"
-            elif int(time) == 12:
-                time = time + " " + "PM"
             else:
-                time = str(int(time) - 12) + " " + "PM"
+                time = time + " " + "PM"
             i[2] = date
             i.insert(3, time)
             newli.append(i)
 
     return newli
+
 
 
 def avail(booking):
@@ -291,21 +291,18 @@ def book_slot():
 
     return redirect(url_for("login"))
 
-
 @app.route("/seeall-admin/")
 def seeall_admin():
     if is_admin():
-        return render_template("all_bookings_admin.html", allBookings=seeall())
+        return render_template("all_bookings_admin.html" ,allBookings = seeall())
     else:
         return redirect(url_for("home"))
-
 
 @app.route("/seeall-user/")
 def seeall_user():
     if logged_in():
         return render_template("all_data_user.html", allBookings=userDetails(session["username"]))
     return redirect(url_for("home"))
-
 
 if __name__ == "__main__":
     app.run(debug=True)
