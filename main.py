@@ -18,7 +18,9 @@ db = SQLAlchemy(app)
 def appropiate_datetime_format(date, time):
     date = date.split("-")
     time = time.split(":")[0]
-    return date[2] + "-" + date[1] + "-" + date[0] + "-" + time
+    appropiate_datetime_format = date[2] + \
+        "-" + date[1] + "-" + date[0] + "-" + time
+    return appropiate_datetime_format
 
 
 class User(db.Model):
@@ -153,7 +155,10 @@ def avail(booking):
             times.append(i[0][11:])
     li = ["07", "08", "09", "10", "11", "12", "13",
           "14", "15", "16", "17", "18", "19", "20", ]
-    availSlots = [i for i in li if times.count(i) < number_of_courts_available]
+    availSlots = []
+    for i in li:
+        if times.count(i) < number_of_courts_available:
+            availSlots.append(i)
     newAvailSlots = []
     for i in availSlots:
         if int(i) <= 12:
@@ -164,7 +169,10 @@ def avail(booking):
 
 
 def is_admin():
-    return "username" in session and session["username"] == "000"
+    if "username" in session:
+        if session["username"] == "000":
+            return True
+    return False
 
 
 class MyModelView(ModelView):
@@ -178,7 +186,8 @@ admin.add_view(MyModelView(Sport, db.session))
 
 
 def str2datetime(string):
-    return datetime.strptime(string, "%d-%m-%Y-%h")
+    datet = datetime.strptime(string, "%d-%m-%Y-%h")
+    return datet
 
 
 @app.route("/")
@@ -193,19 +202,20 @@ def home():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if logged_in():
-        return redirect(url_for("home"))
-    if request.method == "POST":
-        session.pop("username", None)
-        username = str(request.form["username"])
-        password = str(request.form["password"])
-        user_queried = User.query.filter_by(username=username).first()
+    if not logged_in():
+        if request.method == "POST":
+            session.pop("username", None)
+            username = str(request.form["username"])
+            password = str(request.form["password"])
+            user_queried = User.query.filter_by(username=username).first()
 
-        if user_queried is not None and password == user_queried.password:
-            session["username"] = user_queried.username
-            return redirect(url_for("home"))
+            if user_queried is not None:
+                if password == user_queried.password:
+                    session["username"] = user_queried.username
+                    return redirect(url_for("home"))
 
-    return render_template("login.html")
+        return render_template("login.html")
+    return redirect(url_for("home"))
 
 
 @app.route("/logout")
@@ -216,16 +226,20 @@ def logout():
 
 
 def logged_in():
-    return "username" in session
+    if "username" in session:
+        return True
+    return False
 
 
 def today():
-    return datetime.date.today()
+    today = datetime.date.today()
+    return today
 
 
 def week_later():
     today = datetime.date.today()
-    return today + datetime.timedelta(days=7)
+    week_later = today + datetime.timedelta(days=7)
+    return week_later
 
 
 @app.route("/empty-slots")
